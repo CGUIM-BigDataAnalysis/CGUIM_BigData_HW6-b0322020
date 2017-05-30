@@ -19,7 +19,7 @@ IMDB Movie Analysis
 使用資料
 --------
 
-載入IMDB 5000 movies dataset(source:<https://www.kaggle.com/deepmatrix/imdb-5000-movie-dataset>) 並去掉有NA值的整筆電影資料
+載入IMDB 5000 movies dataset (source:<https://www.kaggle.com/deepmatrix/imdb-5000-movie-dataset>) 並去掉有NA值的整筆電影資料
 
 ``` r
 library(readr)
@@ -203,63 +203,46 @@ library(dplyr)
     ##     intersect, setdiff, setequal, union
 
 ``` r
-library(data.table)
-```
-
-    ## -------------------------------------------------------------------------
-
-    ## data.table + dplyr code now lives in dtplyr.
-    ## Please library(dtplyr)!
-
-    ## -------------------------------------------------------------------------
-
-    ## 
-    ## Attaching package: 'data.table'
-
-    ## The following objects are masked from 'package:dplyr':
-    ## 
-    ##     between, first, last
-
-``` r
 cor_money<-summarise(movie_metadata,"cor_budget"=cor(movie_metadata$imdb_score,movie_metadata$budget),"cor_gross"=cor(movie_metadata$imdb_score,movie_metadata$gross))
 cor_likes<-summarise(movie_metadata,"cor_movie_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$movie_facebook_likes), "cor_director_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$director_facebook_likes),"cor_cast_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$cast_total_facebook_likes))
-print("Correlation between IMDB score and budget/gross")
+knitr::kable(data.frame(cor_money))
 ```
 
-    ## [1] "Correlation between IMDB score and budget/gross"
+|  cor\_budget|  cor\_gross|
+|------------:|-----------:|
+|    -0.004201|   0.0012054|
 
 ``` r
-data.table(cor_money)
+knitr::kable(data.frame(cor_likes))
 ```
 
-    ##      cor_budget   cor_gross
-    ## 1: -0.004201038 0.001205434
+|  cor\_movie\_facebook\_likes|  cor\_director\_facebook\_likes|  cor\_cast\_facebook\_likes|
+|----------------------------:|-------------------------------:|---------------------------:|
+|                    0.0026799|                       0.0109876|                   0.0052559|
+
+分析IMDB Score和Metacritic Score是否有相關性 由結果可看出兩者cor呈現高度正相關
 
 ``` r
-print("Correlation between IMDB score and movie/director/cast total facebook likes")
+cor_meta<-summarise(movie_metadata,"cor_imdb_metacritic"=cor(movie_metadata$imdb_score,movie_metadata$metascore))
+knitr::kable(data.frame(cor_meta))
 ```
 
-    ## [1] "Correlation between IMDB score and movie/director/cast total facebook likes"
+cor\_imdb\_metacritic
+---------------------
 
-``` r
-data.table(cor_likes)
-```
-
-    ##    cor_movie_facebook_likes cor_director_facebook_likes
-    ## 1:              0.002679922                  0.01098762
-    ##    cor_cast_facebook_likes
-    ## 1:             0.005255851
+                   1
 
 分析電影分級的分布 (G: General Audience, PG: Parental Guidance Suggested (mainly for under 10's), PG-13: Parental Guidance Suggested for children under 13, R: Under 17 not admitted without parent or guardian, NC-17: Under 17 not admitted) 從各電影分級的個數的表格中，可以發現R rated movie數量最多
 
 ``` r
 content_rating_total<-table(movie_metadata$content_rating)
-content_rating_total[c(1,3,4,5,2)]
+content_rating_total<-content_rating_total[c(1,3,4,5,2)]
+knitr::kable(t(as.matrix(content_rating_total)))
 ```
 
-    ## 
-    ##     G    PG PG-13     R NC-17 
-    ##    87   569  1307  1697    16
+|    G|   PG|  PG-13|     R|  NC-17|
+|----:|----:|------:|-----:|------:|
+|   87|  569|   1307|  1697|     16|
 
 由每年各電影分級的趨勢圖可以發現R和PG-13級的電影有大幅上升的趨勢
 
@@ -312,7 +295,7 @@ export(plot_ly(content_rating_year2, x = ~title_year, y = ~G, type = 'scatter', 
     ## A line object has been specified, but lines is not in the mode
     ## Adding lines to the mode...
 
-![](README_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 期末專題分析規劃
 ----------------

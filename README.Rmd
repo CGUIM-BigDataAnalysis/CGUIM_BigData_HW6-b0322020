@@ -1,7 +1,6 @@
 ---
 title: "IMDB Movie Analysis"
 output: github_document
-
 ---
 
 ##組員
@@ -15,7 +14,7 @@ IMDB、Metacritic、Rotten Tomato，皆為國外廣為人知的電影資訊與�
 想藉由IMDB網站提供的電影資料來分析電影類型及內容的趨勢，IMDB score與電影預算、導演、演員陣容、票房等之間的關係，還有Metascore網站給予的評分與IMDB網站給的評分是否有很大的差異？
 
 ## 使用資料
-載入IMDB 5000 movies dataset(source:https://www.kaggle.com/deepmatrix/imdb-5000-movie-dataset)
+載入IMDB 5000 movies dataset (source:https://www.kaggle.com/deepmatrix/imdb-5000-movie-dataset)
 並去掉有NA值的整筆電影資料
 ```{r}
 library(readr)
@@ -105,21 +104,27 @@ export(p%>%add_trace( x =~title_year, y = ~fitted(loess(n ~ as.numeric(title_yea
 (-0.3~0.3為低度相關；-0.3~-0.6或0.3~0.6為中度相關；-0.6以下或0.6以上為高度相關)
 ```{r}
 library(dplyr)
-library(data.table)
 cor_money<-summarise(movie_metadata,"cor_budget"=cor(movie_metadata$imdb_score,movie_metadata$budget),"cor_gross"=cor(movie_metadata$imdb_score,movie_metadata$gross))
 cor_likes<-summarise(movie_metadata,"cor_movie_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$movie_facebook_likes), "cor_director_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$director_facebook_likes),"cor_cast_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$cast_total_facebook_likes))
-print("Correlation between IMDB score and budget/gross")
-data.table(cor_money)
-print("Correlation between IMDB score and movie/director/cast total facebook likes")
-data.table(cor_likes)
+knitr::kable(data.frame(cor_money))
+knitr::kable(data.frame(cor_likes))
 ```
+
+分析IMDB Score和Metacritic Score是否有相關性
+由結果可看出兩者cor呈現高度正相關
+```{r}
+cor_meta<-summarise(movie_metadata,"cor_imdb_metacritic"=cor(movie_metadata$imdb_score,movie_metadata$metascore))
+knitr::kable(data.frame(cor_meta))
+```
+
 
 分析電影分級的分布
 (G: General Audience, PG: Parental Guidance Suggested (mainly for under 10's), PG-13: Parental Guidance Suggested for children under 13, R: Under 17 not admitted without parent or guardian, NC-17: Under 17 not admitted)
 從各電影分級的個數的表格中，可以發現R rated movie數量最多
 ```{r}
 content_rating_total<-table(movie_metadata$content_rating)
-content_rating_total[c(1,3,4,5,2)]
+content_rating_total<-content_rating_total[c(1,3,4,5,2)]
+knitr::kable(t(as.matrix(content_rating_total)))
 ```
 
 由每年各電影分級的趨勢圖可以發現R和PG-13級的電影有大幅上升的趨勢
