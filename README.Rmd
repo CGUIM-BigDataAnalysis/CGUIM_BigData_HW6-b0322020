@@ -110,13 +110,6 @@ knitr::kable(data.frame(cor_money))
 knitr::kable(data.frame(cor_likes))
 ```
 
-分析IMDB Score和Metacritic Score是否有相關性
-由結果可看出兩者cor呈現高度正相關
-```{r}
-cor_meta<-summarise(movie_metadata,"cor_imdb_metacritic"=cor(movie_metadata$imdb_score,movie_metadata$metascore))
-knitr::kable(data.frame(cor_meta))
-```
-
 
 分析電影分級的分布
 (G: General Audience, PG: Parental Guidance Suggested (mainly for under 10's), PG-13: Parental Guidance Suggested for children under 13, R: Under 17 not admitted without parent or guardian, NC-17: Under 17 not admitted)

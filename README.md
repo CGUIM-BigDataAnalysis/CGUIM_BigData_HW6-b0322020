@@ -220,18 +220,6 @@ knitr::kable(data.frame(cor_likes))
 |----------------------------:|-------------------------------:|---------------------------:|
 |                    0.0026799|                       0.0109876|                   0.0052559|
 
-分析IMDB Score和Metacritic Score是否有相關性 由結果可看出兩者cor呈現高度正相關
-
-``` r
-cor_meta<-summarise(movie_metadata,"cor_imdb_metacritic"=cor(movie_metadata$imdb_score,movie_metadata$metascore))
-knitr::kable(data.frame(cor_meta))
-```
-
-cor\_imdb\_metacritic
----------------------
-
-                   1
-
 分析電影分級的分布 (G: General Audience, PG: Parental Guidance Suggested (mainly for under 10's), PG-13: Parental Guidance Suggested for children under 13, R: Under 17 not admitted without parent or guardian, NC-17: Under 17 not admitted) 從各電影分級的個數的表格中，可以發現R rated movie數量最多
 
 ``` r
@@ -295,7 +283,7 @@ export(plot_ly(content_rating_year2, x = ~title_year, y = ~G, type = 'scatter', 
     ## A line object has been specified, but lines is not in the mode
     ## Adding lines to the mode...
 
-![](README_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 期末專題分析規劃
 ----------------
