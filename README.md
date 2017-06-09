@@ -19,7 +19,7 @@ IMDB Movie Analysis
 使用資料
 --------
 
-載入IMDB 5000 movies dataset (source:<https://www.kaggle.com/deepmatrix/imdb-5000-movie-dataset>) 並去掉有NA值的整筆電影資料
+載入IMDB 5000 movies dataset (source:<https://www.kaggle.com/deepmatrix/imdb-5000-movie-dataset>)
 
 ``` r
 library(readr)
@@ -58,10 +58,6 @@ movie_metadata <- read_csv("~/GitHub/CGUIM_BigData_HW6-b0322020/movie_metadata.c
     ## Warning: 4 parsing failures.
     ## row # A tibble: 4 x 5 col     row    col   expected      actual expected   <int>  <chr>      <chr>       <chr> actual 1  2324 budget an integer  2400000000 file 2  2989 budget an integer 12215500000 row 3  3006 budget an integer  2500000000 col 4  3860 budget an integer  4200000000 expected # ... with 1 more variables: file <chr>
 
-``` r
-movie_metadata<-na.omit(movie_metadata)
-```
-
 藉由movie\_metadata的movie\_imdb\_link，抓取每筆電影在IMDB網站上的最新IMDB rating、rating的人數、User review的人數、Critic review的人數、Metascore 的分數
 
 ``` r
@@ -88,7 +84,7 @@ num_user_reviews<-c()
 num_critic_reviews<-c()
 metascore_rating<-c()
 
-for(i in 1:3752){
+for(i in 1:5043){
   movie<-read_html(movie_metadata$movie_imdb_link[i])
   imdb_rating[[i]]<-movie%>%html_nodes("strong span")%>%html_text()%>%as.numeric()
   imdb_ratingCount[i]<-movie%>%html_nodes(".imdbRating")%>%html_nodes(".small")%>%html_text()
@@ -132,7 +128,6 @@ movie_metadata$num_critic_for_reviews<-as.numeric(num_critic_reviews)
 movie_metadata$num_user_for_reviews<-as.numeric(num_user_reviews)
 movie_metadata$metascore<-as.numeric(metascore_rating)
 movie_metadata<-movie_metadata[ , !(names(movie_metadata) %in% "aspect_ratio")]
-write.csv(movie_metadata, file = "~/GitHub/CGUIM_BigData_HW6-b0322020/movie_metadata_latest.csv")
 ```
 
 清洗content rating，將舊制的分級重新歸類：X rated movie歸類為NC-17，GP和M歸類為PG (source: <https://en.wikipedia.org/wiki/Motion_Picture_Association_of_America_film_rating_system#From_M_to_GP_to_PG>) 最後將除unrated, not rated, passed, Approved的電影改為NA值
@@ -147,10 +142,16 @@ movie_metadata$content_rating[movie_metadata$content_rating == "Passed"] <- NA
 movie_metadata$content_rating[movie_metadata$content_rating == "Approved"] <- NA
 ```
 
+清洗掉title\_year為NA的一整排電影資料(年分為NA值可能尚未上映)，總共剩下4935筆電影資料
+
+``` r
+movie_metadata_clean<-movie_metadata[!is.na(movie_metadata$title_year),]
+```
+
 探索式資料分析
 --------------
 
-在此dataset裡，從每年電影數量趨勢圖中，可以看出2002年的電影數量最多，再來是2006年
+在此dataset裡，從每年電影數量趨勢圖中，可以看出2009年的電影數量最多，再來是2014年
 
 ``` r
 library(plotly)
@@ -176,14 +177,14 @@ library(plotly)
     ##     layout
 
 ``` r
-temp<-movie_metadata %>% select(movie_title,title_year)
+temp<-movie_metadata_clean %>% select(movie_title,title_year)
 p<-temp %>% group_by(title_year) %>% summarise(n=n())%>%plot_ly(x = ~title_year, y = ~n, type = 'scatter', mode = 'lines')
 export(p%>%add_trace( x =~title_year, y = ~fitted(loess(n ~ as.numeric(title_year))))%>%layout(title = "Movies per Year",showlegend = FALSE))
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
-分析IMDB Score和電影預算、總收益、電影Facebook 粉絲人數、導演人氣(導演Facebook粉絲人數)、演員陣容人氣(演員Total Facebook粉絲人數)是否有相關性 由分析結果可看出皆呈現低度正相關，代表他們之間並無存在很大的關聯性 (-0.3<sub>0.3為低度相關；-0.3</sub>-0.6或0.3~0.6為中度相關；-0.6以下或0.6以上為高度相關)
+分析IMDB Score和電影預算、總收益、電影Facebook 粉絲人數、導演人氣(導演Facebook粉絲人數)、演員陣容人氣(演員Total Facebook粉絲人數)是否有相關性 (接排除有NA的電影資料) 由分析結果可看出皆呈現低度正相關，代表他們之間並無存在很大的關聯性 (-0.3 ~ 0.3為低度相關；-0.3 ~ -0.6或0.3~0.6為中度相關；-0.6以下或0.6以上為高度相關)
 
 ``` r
 library(dplyr)
@@ -203,34 +204,63 @@ library(dplyr)
     ##     intersect, setdiff, setequal, union
 
 ``` r
-cor_money<-summarise(movie_metadata,"cor_budget"=cor(movie_metadata$imdb_score,movie_metadata$budget),"cor_gross"=cor(movie_metadata$imdb_score,movie_metadata$gross))
-cor_likes<-summarise(movie_metadata,"cor_movie_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$movie_facebook_likes), "cor_director_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$director_facebook_likes),"cor_cast_facebook_likes"=cor(movie_metadata$imdb_score,movie_metadata$cast_total_facebook_likes))
-knitr::kable(data.frame(cor_money))
+budget_clean<-movie_metadata_clean[!is.na(movie_metadata_clean$budget),]
+cor_budget<-cor(budget_clean$imdb_score,budget_clean$budget)
+```
+
+    ## Warning in cor(budget_clean$imdb_score, budget_clean$budget): the standard
+    ## deviation is zero
+
+``` r
+gross_clean<-movie_metadata_clean[!is.na(movie_metadata_clean$gross),]
+cor_gross<-cor(gross_clean$imdb_score,gross_clean$gross)
+```
+
+    ## Warning in cor(gross_clean$imdb_score, gross_clean$gross): the standard
+    ## deviation is zero
+
+``` r
+cor_money<-summarise(movie_metadata,"cor_budget"=cor_budget,"cor_gross"=cor_gross)
+
+cor_likes<-summarise(movie_metadata_clean,"cor_movie_facebook_likes"=cor(movie_metadata_clean$imdb_score,movie_metadata_clean$movie_facebook_likes),"cor_director_facebook_likes"=cor(movie_metadata_clean$imdb_score,movie_metadata_clean$director_facebook_likes),"cor_cast_facebook_likes"=cor(movie_metadata_clean$imdb_score,movie_metadata_clean$cast_total_facebook_likes))
+```
+
+    ## Warning in cor(movie_metadata_clean$imdb_score, movie_metadata_clean
+    ## $movie_facebook_likes): the standard deviation is zero
+
+    ## Warning in cor(movie_metadata_clean$imdb_score, movie_metadata_clean
+    ## $director_facebook_likes): the standard deviation is zero
+
+    ## Warning in cor(movie_metadata_clean$imdb_score, movie_metadata_clean
+    ## $cast_total_facebook_likes): the standard deviation is zero
+
+``` r
+knitr::kable(cor_money)
 ```
 
 |  cor\_budget|  cor\_gross|
 |------------:|-----------:|
-|    -0.004201|   0.0012054|
+|    0.0447403|   0.1974898|
 
 ``` r
-knitr::kable(data.frame(cor_likes))
+knitr::kable(cor_likes)
 ```
 
 |  cor\_movie\_facebook\_likes|  cor\_director\_facebook\_likes|  cor\_cast\_facebook\_likes|
 |----------------------------:|-------------------------------:|---------------------------:|
-|                    0.0026799|                       0.0109876|                   0.0052559|
+|                    0.2517363|                       0.1735647|                   0.0860007|
 
 分析電影分級的分布 (G: General Audience, PG: Parental Guidance Suggested (mainly for under 10's), PG-13: Parental Guidance Suggested for children under 13, R: Under 17 not admitted without parent or guardian, NC-17: Under 17 not admitted) 從各電影分級的個數的表格中，可以發現R rated movie數量最多
 
 ``` r
-content_rating_total<-table(movie_metadata$content_rating)
+content_rating_total<-table(movie_metadata_clean$content_rating)
 content_rating_total<-content_rating_total[c(1,3,4,5,2)]
 knitr::kable(t(as.matrix(content_rating_total)))
 ```
 
 |    G|   PG|  PG-13|     R|  NC-17|
 |----:|----:|------:|-----:|------:|
-|   87|  569|   1307|  1697|     16|
+|  112|  712|   1461|  2118|     20|
 
 由每年各電影分級的趨勢圖可以發現R和PG-13級的電影有大幅上升的趨勢
 
@@ -241,7 +271,7 @@ library(tidyr)
     ## Warning: package 'tidyr' was built under R version 3.3.3
 
 ``` r
-content_rating_year<-na.omit(movie_metadata)%>%group_by(title_year,content_rating)%>%summarise(n_content_rating=n())
+content_rating_year<-na.omit(movie_metadata_clean)%>%group_by(title_year,content_rating)%>%summarise(n_content_rating=n())
 content_rating_year2<-spread(content_rating_year,content_rating,n_content_rating)
 content_rating_year2[is.na(content_rating_year2)]<-0
 export(plot_ly(content_rating_year2, x = ~title_year, y = ~G, type = 'scatter', mode='line', name = 'G') %>%
@@ -283,7 +313,7 @@ export(plot_ly(content_rating_year2, x = ~title_year, y = ~G, type = 'scatter', 
     ## A line object has been specified, but lines is not in the mode
     ## Adding lines to the mode...
 
-![](README_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 期末專題分析規劃
 ----------------
